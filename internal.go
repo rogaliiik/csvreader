@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
 	"log"
 	"sort"
 	"strconv"
@@ -13,7 +12,7 @@ var (
 	table   [][]string
 	rows    map[string]int
 	columns map[string]int
-	awaited int
+	awaited map[[2]int]int
 )
 
 // TODO: add error handling
@@ -44,47 +43,48 @@ func restoreCSV(reader *csv.Reader) string {
 		rows[row[0]] = i
 	}
 
-	awaited = 0
-	evaluateCell(false)
-	last := awaited
-	for awaited != 0 {
-		evaluateCell(true)
-		if awaited == last {
+	awaited = map[[2]int]int{}
+	for r := 1; r < len(table); r++ {
+		for c := 1; c < len(table[r]); c++ {
+			if table[r][c][0] == '=' {
+				evaluateCell(r, c, false)
+			}
+		}
+	}
+	last := len(awaited)
+	for len(awaited) != 0 {
+		for k := range awaited {
+			evaluateCell(k[0], k[1], true)
+		}
+		if len(awaited) == last {
 			log.Println("Impossible to solve problem, there are cyclic links")
 			break
 		}
-		last = awaited
+		last = len(awaited)
 	}
 	var res []string
 	for _, r := range table {
 		res = append(res, strings.Join(r, ","))
 	}
-	fmt.Println(strings.Join(res, "\n"))
 	return strings.Join(res, "\n")
 }
 
-func evaluateCell(flag bool) {
+func evaluateCell(r, c int, flag bool) {
 	operations := map[rune]int{'+': 1, '-': 1, '/': 1, '*': 1}
-	for r := 1; r < len(table); r++ {
-		for c := 1; c < len(table[r]); c++ {
-			if table[r][c][0] == '=' {
-				for i, char := range table[r][c] {
-					if _, ok := operations[char]; ok {
-						leftArg := splitAndFindCell(table[r][c][1:i])
-						rightArg := splitAndFindCell(table[r][c][i+1:])
-						if leftArg[0] == '=' || rightArg[0] == '=' {
-							if !flag {
-								awaited += 1
-							}
-							continue
-						}
-						if flag {
-							awaited -= 1
-						}
-						table[r][c] = operate(leftArg, rightArg, char)
-					}
+	for i, char := range table[r][c] {
+		if _, ok := operations[char]; ok {
+			leftArg := splitAndFindCell(table[r][c][1:i])
+			rightArg := splitAndFindCell(table[r][c][i+1:])
+			if leftArg[0] == '=' || rightArg[0] == '=' {
+				if !flag {
+					awaited[[2]int{r, c}]++
 				}
+				continue
 			}
+			if flag {
+				delete(awaited, [2]int{r, c})
+			}
+			table[r][c] = operate(leftArg, rightArg, char)
 		}
 	}
 }
