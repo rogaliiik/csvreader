@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/csv"
-	"log"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,11 +15,7 @@ var (
 	awaited map[[2]int]int
 )
 
-// TODO: add error handling
-// TODO: make better algo
-// TODO: makefile
-// TODO: Readme.md
-func restoreCSV(reader *csv.Reader) string {
+func restoreCSV(reader *csv.Reader) (string, error) {
 	table = [][]string{}
 	for {
 		record, err := reader.Read()
@@ -31,34 +27,51 @@ func restoreCSV(reader *csv.Reader) string {
 	sort.Slice(table, func(i int, j int) bool {
 		return table[i][0] < table[j][0]
 	})
+	if table[0][0] != "" {
+		return "", fmt.Errorf("there is no first column in the table")
+	}
 
 	// columns map stores titles of columns
 	columns = map[string]int{}
 	for i, col := range table[0] {
+		if _, ok := columns[col]; ok {
+			return "", fmt.Errorf("column %s is duplicated", col)
+		}
 		columns[col] = i
 	}
 	// columns map stores titles of rows
 	rows = map[string]int{}
 	for i, row := range table {
+		if _, ok := rows[row[0]]; ok {
+			return "", fmt.Errorf("row %s is duplicated", row)
+		}
 		rows[row[0]] = i
 	}
 
 	awaited = map[[2]int]int{}
 	for r := 1; r < len(table); r++ {
 		for c := 1; c < len(table[r]); c++ {
+			if table[r][c] == "" {
+				return "", fmt.Errorf("cell value is empty string")
+			}
 			if table[r][c][0] == '=' {
-				evaluateCell(r, c, false)
+				err := evaluateCell(r, c, false)
+				if err != nil {
+					return "", err
+				}
 			}
 		}
 	}
 	last := len(awaited)
 	for len(awaited) != 0 {
 		for k := range awaited {
-			evaluateCell(k[0], k[1], true)
+			err := evaluateCell(k[0], k[1], true)
+			if err != nil {
+				return "", err
+			}
 		}
 		if len(awaited) == last {
-			log.Println("Impossible to solve problem, there are cyclic links")
-			break
+			return "", fmt.Errorf("impossible to solve problem, there are cyclic links in table")
 		}
 		last = len(awaited)
 	}
@@ -66,51 +79,79 @@ func restoreCSV(reader *csv.Reader) string {
 	for _, r := range table {
 		res = append(res, strings.Join(r, ","))
 	}
-	return strings.Join(res, "\n")
+	return strings.Join(res, "\n"), nil
 }
 
-func evaluateCell(r, c int, flag bool) {
+func evaluateCell(r, c int, flag bool) error {
 	operations := map[rune]int{'+': 1, '-': 1, '/': 1, '*': 1}
 	for i, char := range table[r][c] {
 		if _, ok := operations[char]; ok {
-			leftArg := splitAndFindCell(table[r][c][1:i])
-			rightArg := splitAndFindCell(table[r][c][i+1:])
+			leftArg, err := splitAndFindCell(table[r][c][1:i])
+			if err != nil {
+				return err
+			}
+			rightArg, err := splitAndFindCell(table[r][c][i+1:])
+			if err != nil {
+				return err
+			}
 			if leftArg[0] == '=' || rightArg[0] == '=' {
 				if !flag {
 					awaited[[2]int{r, c}]++
 				}
-				continue
+				return nil
 			}
 			if flag {
 				delete(awaited, [2]int{r, c})
 			}
-			table[r][c] = operate(leftArg, rightArg, char)
+			res, err := calculate(leftArg, rightArg, char)
+			if err != nil {
+				return err
+			}
+			table[r][c] = res
+			return nil
 		}
 	}
+	return fmt.Errorf("there is no operand in the cell: %s [%d][%d]", table[r][c], r, c)
 }
 
-func splitAndFindCell(s string) string {
+func splitAndFindCell(s string) (string, error) {
 	for i, v := range s {
 		_, err := strconv.Atoi(string(v))
 		if err != nil {
 			continue
 		}
-		return table[rows[s[i:]]][columns[s[:i]]]
+		if _, ok := rows[s[i:]]; !ok {
+			return "", fmt.Errorf("row '%s' not in table", s[i:])
+		}
+		if _, ok := columns[s[:i]]; !ok {
+			return "", fmt.Errorf("column '%s' not in table", s[:i])
+		}
+		return table[rows[s[i:]]][columns[s[:i]]], nil
 	}
-	return ""
+	return "", fmt.Errorf("argument has invalid format, %s", s)
 }
 
-func operate(leftArg, rightArg string, operand rune) string {
-	arg1, _ := strconv.Atoi(leftArg)
-	arg2, _ := strconv.Atoi(rightArg)
+// calculate
+func calculate(leftArg, rightArg string, operand rune) (string, error) {
+	arg1, err := strconv.Atoi(leftArg)
+	if err != nil {
+		return "", err
+	}
+	arg2, err := strconv.Atoi(rightArg)
+	if err != nil {
+		return "", err
+	}
 	switch operand {
 	case '+':
-		return strconv.Itoa(arg1 + arg2)
+		return strconv.Itoa(arg1 + arg2), nil
 	case '*':
-		return strconv.Itoa(arg1 * arg2)
+		return strconv.Itoa(arg1 * arg2), nil
 	case '/':
-		return strconv.Itoa(arg1 / arg2)
+		if arg2 == 0 {
+			return "", fmt.Errorf("zero division")
+		}
+		return strconv.Itoa(arg1 / arg2), nil
 	default:
-		return strconv.Itoa(arg1 - arg2)
+		return strconv.Itoa(arg1 - arg2), nil
 	}
 }
