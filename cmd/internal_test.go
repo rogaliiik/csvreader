@@ -9,7 +9,7 @@ import (
 )
 
 func TestRestoreCSV_common(t *testing.T) {
-	fileName := "./tables/test1.csv"
+	fileName := "../tables/test1.csv"
 	file, _ := os.Open(fileName)
 
 	defer file.Close()
@@ -26,7 +26,7 @@ func TestRestoreCSV_common(t *testing.T) {
 }
 
 func TestRestoreCSV_cyclicLinks(t *testing.T) {
-	fileName := "./tables/test2.csv"
+	fileName := "../tables/test2.csv"
 	file, _ := os.Open(fileName)
 
 	defer file.Close()
@@ -39,7 +39,7 @@ func TestRestoreCSV_cyclicLinks(t *testing.T) {
 }
 
 func TestRestoreCSV_wrongData(t *testing.T) {
-	fileName := "./tables/test3.csv"
+	fileName := "../tables/test3.csv"
 	file, _ := os.Open(fileName)
 
 	defer file.Close()
@@ -52,7 +52,7 @@ func TestRestoreCSV_wrongData(t *testing.T) {
 }
 
 func TestRestoreCSV_noColumns(t *testing.T) {
-	fileName := "./tables/test4.csv"
+	fileName := "../tables/test4.csv"
 	file, _ := os.Open(fileName)
 
 	defer file.Close()
@@ -65,7 +65,7 @@ func TestRestoreCSV_noColumns(t *testing.T) {
 }
 
 func TestRestoreCSV_wrongCellFormat(t *testing.T) {
-	fileName := "./tables/test5.csv"
+	fileName := "../tables/test5.csv"
 	file, _ := os.Open(fileName)
 
 	defer file.Close()
@@ -78,7 +78,7 @@ func TestRestoreCSV_wrongCellFormat(t *testing.T) {
 }
 
 func TestRestoreCSV_duplicateRow(t *testing.T) {
-	fileName := "./tables/test6.csv"
+	fileName := "../tables/test6.csv"
 	file, _ := os.Open(fileName)
 
 	defer file.Close()
@@ -91,7 +91,7 @@ func TestRestoreCSV_duplicateRow(t *testing.T) {
 }
 
 func TestRestoreCSV_cellEmpty(t *testing.T) {
-	fileName := "./tables/test7.csv"
+	fileName := "../tables/test7.csv"
 	file, _ := os.Open(fileName)
 
 	defer file.Close()
@@ -104,7 +104,7 @@ func TestRestoreCSV_cellEmpty(t *testing.T) {
 }
 
 func TestRestoreCSV_commonNegative(t *testing.T) {
-	fileName := "./tables/test8.csv"
+	fileName := "../tables/test8.csv"
 	file, _ := os.Open(fileName)
 
 	defer file.Close()

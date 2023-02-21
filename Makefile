@@ -1,7 +1,7 @@
 build:
-	go build -o csvreader.exe .
+	go build -o csvreader.exe ./cmd
 
 test:
-	go test
+	go test ./cmd
 
 .DEFAULT_GOAL := build

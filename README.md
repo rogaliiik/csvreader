@@ -44,7 +44,7 @@ make
 ```
 Либо 
 ```go
-go build -o csvreader.exe .
+go build -o csvreader.exe ./cmd
 ```
 Для запуска используйте команду:
 ```
@@ -61,7 +61,7 @@ make test
 ```
 Либо
 ```go
-go test
+go test ./cmd
 ```
 
 ### Пример ввода/вывода программы
