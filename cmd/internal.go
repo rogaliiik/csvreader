@@ -39,7 +39,7 @@ func restoreCSV(reader *csv.Reader) (string, error) {
 		}
 		columns[col] = i
 	}
-	// columns map stores titles of rows
+	// rows map stores titles of rows
 	rows = map[string]int{}
 	for i, row := range table {
 		if _, ok := rows[row[0]]; ok {
@@ -82,6 +82,8 @@ func restoreCSV(reader *csv.Reader) (string, error) {
 	return strings.Join(res, "\n"), nil
 }
 
+// evaluateCell handles a cell with a formula
+// the flag indicates if we should remove the row-column pair from the map
 func evaluateCell(r, c int, flag bool) error {
 	operations := map[rune]int{'+': 1, '-': 1, '/': 1, '*': 1}
 	for i, char := range table[r][c] {
@@ -114,6 +116,8 @@ func evaluateCell(r, c int, flag bool) error {
 	return fmt.Errorf("there is no operand in the cell: %s [%d][%d]", table[r][c], r, c)
 }
 
+// splitAndFindCell splits string into row and column and
+// returns value of the cell
 func splitAndFindCell(s string) (string, error) {
 	for i, v := range s {
 		_, err := strconv.Atoi(string(v))
@@ -131,7 +135,7 @@ func splitAndFindCell(s string) (string, error) {
 	return "", fmt.Errorf("argument has invalid format, %s", s)
 }
 
-// calculate
+// calculate performs operations based on the received operand
 func calculate(leftArg, rightArg string, operand rune) (string, error) {
 	arg1, err := strconv.Atoi(leftArg)
 	if err != nil {
